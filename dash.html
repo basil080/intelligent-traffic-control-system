@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control Panel</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+        }
+
+        .navbar {
+            background-color: #007bff;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: white;
+        }
+
+        .navbar .menu-icon {
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .navbar .title {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .sidebar {
+            height: 100%;
+            width: 0;
+            position: fixed;
+            z-index: 1;
+            top: 0;
+            left: 0;
+            background-color: #111;
+            overflow-x: hidden;
+            transition: 0.5s;
+            padding-top: 60px;
+        }
+
+        .sidebar a {
+            padding: 8px 8px 8px 32px;
+            text-decoration: none;
+            font-size: 25px;
+            color: #818181;
+            display: block;
+            transition: 0.3s;
+        }
+
+        .sidebar a:hover {
+            color: #f1f1f1;
+        }
+
+        .sidebar .close-btn {
+            position: absolute;
+            top: 0;
+            right: 25px;
+            font-size: 36px;
+            margin-left: 50px;
+        }
+
+        .control-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+    
+        .traffic-dot {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+        }
+
+        .red {
+            background-color: red;
+        }
+
+        .yellow {
+            background-color: yellow;
+            color: black;
+        }
+
+        .green {
+            background-color: green;
+        }
+
+        .timer {
+            font-size: 20px;
+            color: #333;
+            margin-top: 10px;
+        }
+
+        .vehicle-count {
+            font-size: 18px;
+            margin-top: 20px;
+            color: #333;
+        }
+
+        .menu-icon {
+            font-size: 24px;
+            cursor: pointer;
+        }
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+        }
+
+        .navbar {
+            background-color: #007bff;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: white;
+        }
+
+        .navbar .menu-icon {
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .navbar .title {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .sidebar {
+            height: 100%;
+            width: 0;
+            position: fixed;
+            z-index: 1;
+            top: 0;
+            left: 0;
+            background-color: #111;
+            overflow-x: hidden;
+            transition: 0.5s;
+            padding-top: 60px;
+        }
+
+        .sidebar a {
+            padding: 8px 8px 8px 32px;
+            text-decoration: none;
+            font-size: 25px;
+            color: #818181;
+            display: block;
+            transition: 0.3s;
+        }
+
+        .sidebar a:hover {
+            color: #f1f1f1;
+        }
+
+        .sidebar .close-btn {
+            position: absolute;
+            top: 0;
+            right: 25px;
+            font-size: 36px;
+            margin-left: 50px;
+        }
+
+        .control-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .video-feed-container {
+            width: 80%;
+            max-width: 700px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .video-feed {
+            width: 30%;
+            height: 100%;
+            background-color: #000;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .video-feed select {
+            margin-top: 10px;
+            padding: 5px;
+        }
+
+        .video-feed button {
+            margin-top: 5px;
+            padding: 5px 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .video-feed button:hover {
+            background-color: #0056b3;
+        }
+
+        .traffic-dot {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+        }
+
+        .red {
+            background-color: red;
+        }
+
+        .yellow {
+            background-color: yellow;
+            color: black;
+        }
+
+        .green {
+            background-color: green;
+        }
+
+        .timer {
+            font-size: 20px;
+            color: #333;
+            margin-top: 10px;
+        }
+
+        .vehicle-count {
+            font-size: 18px;
+            margin-top: 20px;
+            color: #333;
+        }
+
+        .footer {
+            background-color: #007bff;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+
+        .footer a {
+            color: white;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        
+        .power-button {
+    position: fixed; 
+    top: 60px; 
+    right: 60px;
+    background-color: #4CAF50;
+    border: none;
+    border-radius: 50%;
+    width: 80px;
+    height: 80px;
+    box-shadow: 0 0 10px #4CAF50;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.power-button.glow {
+    box-shadow: 0 0 20px #4CAF50, 0 0 20px #4CAF50;
+    background-color: #36a12d;
+}
+.submit-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px; 
+}
+
+.submit-button {
+    background-color: #007bff; 
+    color: white; 
+    border: none;
+    border-radius: 5px; 
+    padding: 10px 20px; 
+    font-size: 18px; 
+    cursor: pointer;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.submit-button:hover {
+    background-color: #0056b3; 
+    box-shadow: 0 0 10px rgba(0, 123, 255, 0.5); 
+}
+
+.submit-button:active {
+    background-color: #003f7f; 
+    box-shadow: none; 
+}
+
+
+    </style>
+</head>
+<body>
+    <div id="sidebar" class="sidebar">
+        <a href="javascript:void(0)" class="close-btn" onclick="closeMenu()">&times;</a>
+        <a href="#">Home</a>
+        <a href="#">About</a>
+        <a href="/logout">Logout</a>
+    </div>
+
+    <div class="navbar">
+        <i class="fas fa-bars menu-icon" onclick="openMenu()"></i>
+        <div class="title">Traffic Control Panel</div>
+    </div>
+
+    <div class="control-panel">
+
+        <div class="vehicle-count">
+            <div id="lane1-count">Lane 1: 0 Vehicles</div>
+            <div id="lane2-count">Lane 2: 0 Vehicles</div>
+            <div id="lane3-count">Lane 3: 0 Vehicles</div>
+        </div>
+        <button class="power-button" id="powerButton">
+            <i class="fas fa-power-off"></i>
+        </button>
+        <div class="video-feed-container">
+            <div class="video-feed" id="lane1-feed">
+                <img src="/stream/lane1" style="width: 100%; max-width: 600px;" />
+                <div class="traffic-dot red" id="dot-lane1" style="display: none;">
+     
+                </div>
+                <select id="lane1_color">
+                    <option value="red">Red</option>
+                    <option value="yellow">Yellow</option>
+                    <option value="green">Green</option>
+                </select>
+            </div>
+
+            <div class="video-feed" id="lane2-feed">
+                <img src="/stream/lane2" style="width: 100%; max-width: 600px;" />
+                <div class="traffic-dot yellow" id="dot-lane2" style="display: none;">
+       
+                </div>
+                <select id="lane2_color">
+                    <option value="red">Red</option>
+                    <option value="yellow">Yellow</option>
+                    <option value="green">Green</option>
+                </select>
+            </div>
+
+            <div class="video-feed" id="lane3-feed">
+                <img src="/stream/lane3" style="width: 100%; max-width: 600px;" />
+                <div class="traffic-dot green" id="dot-lane3" style="display: none;">
+    
+                </div>
+                <select id="lane3_color">
+                    <option value="red">Red</option>
+                    <option value="yellow">Yellow</option>
+                    <option value="green">Green</option>
+                </select>
+            </div>
+        </div>
+        <div class="submit-container">
+            <button class="submit-button" onclick="suber()">Manual</button>
+        </div>
+        
+    </div>
+    <div class="footer">
+        &copy; 2024 Traffic Control System | <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a>
+    </div>
+
+    <script>
+document.addEventListener("DOMContentLoaded", function () {
+    function updateLightsFromMatrix(matrix) {
+        if (!matrix || !matrix.lane1 || !Array.isArray(matrix.lane1)) {
+            console.error("Invalid lights matrix format:", matrix);
+            return;
+        }
+
+        const lights = matrix.lane1; 
+        if (lights.length !== 3 || lights.some(lane => lane.length !== 3)) {
+            console.error("Invalid lane data in lights matrix:", lights);
+            return;
+        }
+
+        ['lane1', 'lane2', 'lane3'].forEach((lane, idx) => {
+            const [red, yellow, green] = lights[idx];
+            const dot = document.querySelector(`#dot-${lane}`); 
+
+            if (!dot) {
+                console.warn(`Element for ${lane} not found.`);
+                return;
+            }
+
+            dot.classList.remove('red', 'yellow', 'green');
+
+            if (red === 1) dot.classList.add('red');
+            if (yellow === 1) dot.classList.add('yellow');
+            if (green === 1) dot.classList.add('green');
+        });
+    }
+
+
+   
+     function updateVehicleCounts(vehicleData) {
+        console.log(vehicleData); 
+        ['lane1', 'lane2', 'lane3'].forEach(lane => {
+            const countElement = document.querySelector(`#${lane}-count`);
+            if (countElement) {
+                countElement.textContent = `${lane.charAt(0).toUpperCase() + lane.slice(1)}: ${vehicleData[lane] || 0} Vehicles`;
+            }
+        });
+    }
+
+ 
+    function fetchAndUpdateLights() {
+        fetch("/fetch_lights")
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Failed to fetch lights data: " + response.statusText);
+                }
+                return response.json();
+            })
+            .then(data => {
+                updateLightsFromMatrix(data);
+            })
+            .catch(error => {
+                console.error("Error fetching or updating lights:", error);
+            });
+    }
+
+
+     function fetchAndUpdateVehicleCounts() {
+        fetch("/fetch")
+            .then(response => response.json())
+            .then(data => updateVehicleCounts(data))
+            .catch(console.error);
+    }
+ 
+    function initializeFetchIntervals() {
+        setInterval(() => {
+            fetchAndUpdateLights();
+            fetchAndUpdateVehicleCounts();
+        }, 2000);
+    }
+
+    initializeFetchIntervals();
+});
+
+
+powerButton.addEventListener("click", function () {
+    $.ajax({
+        url: "/start",
+        method: "GET",
+        success: function (response, textStatus, xhr) {
+            if (xhr.status === 200) {
+                if (response.status === "started") {
+
+                    powerButton.classList.add("glow");
+                    $("#dot-lane3").show();
+                    $("#dot-lane2").show();
+                    $("#dot-lane1").show();
+                    console.log("System Activated: Server confirmed start.");
+                } else if (response.status === "stopped") {
+                    powerButton.classList.remove("glow");
+                    $("#dot-lane3").hide();
+                    $("#dot-lane2").hide();
+                    $("#dot-lane1").hide();
+                    console.log("System Deactivated: Server confirmed stop.");
+                } else {
+                    console.error("Unexpected status from server:", response.status);
+                }
+            } else {
+                console.error("Unexpected response from server.");
+                alert("Error: Unable to toggle the system state.");
+            }
+        },
+        error: function (xhr, textStatus, errorThrown) {
+            console.error("Error communicating with the server:", errorThrown);
+            alert("Error: Could not communicate with the server.");
+        }
+    });
+});
+
+    function suber() {
+        let lane1Color = document.getElementById('lane1_color').value;
+        let lane2Color = document.getElementById('lane2_color').value;
+        let lane3Color = document.getElementById('lane3_color').value;
+
+        let data = {
+            lane1: lane1Color,
+            lane2: lane2Color,
+            lane3: lane3Color
+        };
+
+        $.ajax({
+            url: '/manual',         
+            type: 'POST',            
+            contentType: 'application/json',
+            data: JSON.stringify(data),    
+            success: function(response) {
+                console.log('Data submitted successfully:', response);
+
+                $.ajax({
+                    url: '/set-lights',
+                    type: 'POST',       
+                    contentType: 'application/json',
+                    data: JSON.stringify({ lights: response.lights }), 
+                    success: function(setLightsResponse) {
+                        console.log('Lights set successfully:', setLightsResponse);
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error setting lights:', error);
+                    }
+                });
+            },
+            error: function(xhr, status, error) {
+                console.error('Error submitting data:', error);
+            }
+        });
+    }   
+    function openMenu() {
+            document.getElementById("sidebar").style.width = "250px";
+        }
+
+        function closeMenu() {
+            document.getElementById("sidebar").style.width = "0";
+        }
+    </script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+</body>
+</html>
