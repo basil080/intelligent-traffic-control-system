@@ -1,154 +1,217 @@
-import time
-import requests
-import pandas as pd
+from flask import Flask, request, jsonify, render_template, session, Response,redirect,url_for
 import cv2
-from ultralytics import YOLO  
+import time
 
-url = 'http://127.0.0.1:5000/'
+app = Flask(__name__)
+app.secret_key = "1234"
+started=False
+lights=[[0,1,0],[1,0,0],[0,0,1]]
+data = [
+    [0, 0, 0] 
+]
+lanes = {
+    'lane1': {'red': 14, 'yellow': 15, 'green': 26},
+    'lane2': {'red': 23, 'yellow': 24, 'green': 25},
+    'lane3': {'red': 5, 'yellow': 6, 'green': 13},
+}
 
-vehicle_model = YOLO('yolov8s.pt')  
-ambulance_model = YOLO('emergency.pt')  
+VALID_USERNAME = "admin"
+VALID_PASSWORD = "admin"
 
-def find_and_count_vehicles(frame, lane_number):
-    vehicle_results = vehicle_model(frame)
-    ambulance_results = ambulance_model(frame)
+COLOR_RGB = {
+    "red": [255, 0, 0],      
+    "yellow": [255, 255, 0], 
+    "green": [0, 255, 0],    
+}
 
-    vehicle_boxes = vehicle_results[0].boxes
-    ambulance_boxes = ambulance_results[0].boxes
+@app.route('/manual', methods=['POST'])
+def manual_control():
+    data = request.get_json()
+    global lights
+    global started
+    lane1_color = data.get('lane1')
+    lane2_color = data.get('lane2')
+    lane3_color = data.get('lane3')
+    l=[]
+    if lane1_color=="red":
+        lane1=[1,0,0]
+    if lane1_color=="yellow":
+        lane1=[0,1,0]
+    if lane1_color=="green":
+        lane1=[0,0,1]
+    if lane2_color=="red":
+        lane2=[1,0,0]
+    if lane2_color=="yellow":
+        lane2=[0,1,0]
+    if lane2_color=="green":
+        lane2=[0,0,1]
+    if lane3_color=="red":
+        lane3=[1,0,0]
+    if lane3_color=="yellow":
+        lane1=[0,1,0]
+    if lane3_color=="green":
+        lane3=[0,0,1]
+    l.append(lane1)
+    l.append(lane2)
+    l.append(lane3)
+    lights=l
+    print(lights)
+    set_lights()
+    return jsonify({'lights': lights})
 
-    vehicle_classes = [2, 3, 5, 7, 8]  
-    confidence_threshold_vehicle = 0.50
-    confidence_threshold_ambulance = 0.80  
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login_page"))
+@app.route("/start")
+def start():
+    global started
+    if not started:
+        started=True
+        return {"status":"started"},200
+    else:
+        started=False
+        return {"status":"stopped"},200
 
-    df_vehicles = pd.DataFrame({
-        "confidence": vehicle_boxes.conf.cpu().numpy(),
-        "class": vehicle_boxes.cls.cpu().numpy(),
-        "xmin": vehicle_boxes.xywh[:, 0].cpu().numpy(),
-        "ymin": vehicle_boxes.xywh[:, 1].cpu().numpy(),
-        "xmax": vehicle_boxes.xywh[:, 2].cpu().numpy(),
-        "ymax": vehicle_boxes.xywh[:, 3].cpu().numpy()
-    })
-
-    df_ambulances = pd.DataFrame({
-        "confidence": ambulance_boxes.conf.cpu().numpy(),
-        "class": ambulance_boxes.cls.cpu().numpy(),
-        "xmin": ambulance_boxes.xywh[:, 0].cpu().numpy(),
-        "ymin": ambulance_boxes.xywh[:, 1].cpu().numpy(),
-        "xmax": ambulance_boxes.xywh[:, 2].cpu().numpy(),
-        "ymax": ambulance_boxes.xywh[:, 3].cpu().numpy()
-    })
-
-    filtered_vehicles = df_vehicles[(df_vehicles['confidence'] >= confidence_threshold_vehicle) & 
-                                    (df_vehicles['class'].isin(vehicle_classes))]
+@app.route("/fetch")
+def fetch():
+    global data
     
-    ambulance_detected = not df_ambulances[df_ambulances['confidence'] >= confidence_threshold_ambulance].empty  
-
-    print(f"Lane {lane_number} detected vehicles: {filtered_vehicles.shape[0]}")  
-    if ambulance_detected:
-        print("Ambulance detected in Lane {lane_number}! ")
-
-    return len(filtered_vehicles), ambulance_detected
-
-
-def rotate_lights(lights_config):
-    updated_config = []
-    for lane in lights_config:
-        if lane == [0, 0, 1]:
-            updated_config.append([1, 0, 0])  
-        elif lane == [0, 1, 0]:
-            updated_config.append([0, 0, 1])  
-        elif lane == [1, 0, 0]:
-            updated_config.append([0, 1, 0])  
-        else:
-            updated_config.append(lane)
-    return updated_config
-
-
-def set_lights(light_config):
-    try:
-        lights_data = {"lights": light_config}
-        response = requests.post(url+"set-lights", json=lights_data)
-
-        if response.status_code == 200:
-            print("\n🚦 Lights set successfully! Current status:")
-            for i, lane in enumerate(light_config, start=1):
-                status = "🟢 Green" if lane == [0, 0, 1] else "🟡 Yellow" if lane == [0, 1, 0] else "🔴 Red"
-                print(f"Lane {i}: {status}")
-        else:
-            print("Failed to set lights:", response.status_code, response.json())
-    except:
-        print("Set light failed:")
-        return 
-
-
-def control_traffic():
-    lane_videos = [cv2.VideoCapture(url+"/stream/lane1"),  
-                   cv2.VideoCapture(url+"/stream/lane2"),
-                   cv2.VideoCapture(url+"/stream/lane3")]
+    vehicle_data = {
+        "lane1": data[0][0],  
+        "lane2": data[0][1],  
+        "lane3":data[0][2] 
+    }
+    print(vehicle_data)
+    return jsonify(vehicle_data)
+@app.route("/fetch_lights")
+def light_fetch():
+    global lights
     
+    light_data = {
+        "lane1": lights
+    }
+    return jsonify(light_data)
+@app.route("/")
+def login_page():
+    return render_template("index.html")
+
+@app.route("/validate-login", methods=["POST"])
+def validate_login():
+    data = request.get_json()
+    username = data.get("username")
+    password = data.get("password")
+
+    if username == VALID_USERNAME and password == VALID_PASSWORD:
+        session["user"] = "admin"
+        return jsonify({"status": "Success"}), 200
+    else:
+        return jsonify({"status": "Failure"}), 401
+
+@app.route("/dash")
+def control_panel():
+    if "user" in session:
+        return render_template("dash.html")
+
+cap_lane1 = cv2.VideoCapture("lane1.mp4")  
+cap_lane2 = cv2.VideoCapture("lane2.mp4")
+cap_lane3 = cv2.VideoCapture("lane3.mp4")
+
+def generate_video_stream(capture_device, lane):
+    """Function to generate video stream from a video capture device (OpenCV)"""
     while True:
-        lane_counts = [0, 0, 0]
-        ambulance_detected = [False, False, False]
+        ret, frame = capture_device.read()
         
-        lane_frames = []
-        for cap in lane_videos:
-            ret, frame = cap.read()
-            if not ret:
-                print("End of video feed or error reading frames.")
-                return
-            lane_frames.append(frame)
+        if not ret:
+            capture_device.set(cv2.CAP_PROP_POS_FRAMES, 0)  
+            ret, frame = capture_device.read()  
+
+        if not ret:
+            print(f"Error reading video for Lane {lane}")
+            break
+        time.sleep(0.5)
+        ret, jpeg = cv2.imencode('.jpg', frame)
+        if not ret:
+            print(f"Error encoding frame for Lane {lane}")
+            break
+
+        yield (b'--frame\r\n'
+               b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n\r\n')
+
+
+@app.route('/data', methods=['POST'])
+def handle_data():
+    try:
+        global data
+        data = request.json['data']
+        print("Received data:", data)
         
-        time.sleep(2)
-        for i in range(3):
-            lane_counts[i], ambulance_detected[i] = find_and_count_vehicles(lane_frames[i], i+1)
-        
-        if any(ambulance_detected):  
-            ambulance_lane = ambulance_detected.index(True)
-            sorted_lanes = sorted([i for i in range(3) if i != ambulance_lane], key=lambda i: lane_counts[i], reverse=True)
-            next_lights_config = [[0, 0, 0] for _ in range(3)]
-            next_lights_config[ambulance_lane] = [0, 0, 1]  
-            next_lights_config[sorted_lanes[0]] = [0, 1, 0]  
-            next_lights_config[sorted_lanes[1]] = [1, 0, 0]  
+
+        return jsonify({"status": "Success, lights updated"}), 200
+    except Exception as e:
+        print(f"Error processing data: {str(e)}")
+        return jsonify({"error": f"Error processing data: {str(e)}"}), 400
+
+@app.route("/stream/lane1")
+def stream_lane1():
+    """Video stream for lane 1"""
+    return Response(generate_video_stream(cap_lane1,"1"),
+                    mimetype="multipart/x-mixed-replace; boundary=frame")
+
+@app.route("/stream/lane2")
+def stream_lane2():
+    """Video stream for lane 2"""
+    return Response(generate_video_stream(cap_lane2,"2"),
+                    mimetype="multipart/x-mixed-replace; boundary=frame")
+
+@app.route("/stream/lane3")
+def stream_lane3():
+    """Video stream for lane 3"""
+    return Response(generate_video_stream(cap_lane3,"3"),
+                    mimetype="multipart/x-mixed-replace; boundary=frame")
+
+import RPi.GPIO as GPIO
+import time
+
+
+GPIO.setmode(GPIO.BCM)
+
+@app.route("/")
+def login():
+    return render_template("index.html")
+
+
+for lane in lanes.values():
+    for color, pin in lane.items():
+        GPIO.setup(pin, GPIO.OUT)
+
+def control_lights(lights_matrix):
+    for lane_idx, lane_state in enumerate(lights_matrix):
+        lane_name = f'lane{lane_idx + 1}'
+        lane_pins = lanes[lane_name]
+
+        GPIO.output(lane_pins['red'], lane_state[0])
+        GPIO.output(lane_pins['yellow'], lane_state[1])
+        GPIO.output(lane_pins['green'], lane_state[2])
+
+@app.route('/set-lights', methods=['POST'])
+def set_lights():
+    if started==True:
+        try:
+            lights_matrix = request.json['lights']
+            global lights
+            lights=lights_matrix
             
-            print("Giving emergency priority for 15 seconds...")
-            set_lights(next_lights_config)
-            time.sleep(15)  
-
-        else:
-            sorted_lanes = sorted(range(3), key=lambda i: lane_counts[i], reverse=True)
-            next_lights_config = [[0, 0, 0] for _ in range(3)]
-            next_lights_config[sorted_lanes[0]] = [0, 0, 1]  
-            next_lights_config[sorted_lanes[1]] = [0, 1, 0]  
-            next_lights_config[sorted_lanes[2]] = [1, 0, 0]  
-
-        print("Starting rotation cycle...")
-        set_lights(next_lights_config)
-        time.sleep(3)
-
-        for _ in range(3):
-            lane_frames = [cap.read()[1] for cap in lane_videos if cap.isOpened()]
-
-            ambulance_detected_during_rotation = [find_and_count_vehicles(lane_frames[i], i+1)[1] for i in range(3)]
+            if len(lights_matrix) != 3 or any(len(lane) != 3 for lane in lights_matrix):
+                return jsonify({"error": "Invalid array format. Must be 3x3."}), 400
             
-            if any(ambulance_detected_during_rotation):
-                print("New ambulance detected during rotation! Immediately switching lights.")
-                ambulance_lane = ambulance_detected_during_rotation.index(True)
-                next_lights_config = [[0, 0, 0] for _ in range(3)]
-                next_lights_config[ambulance_lane] = [0, 0, 1]  
-                set_lights(next_lights_config)
-                time.sleep(15)  
-                break  
+            control_lights(lights_matrix)
+            
+            return jsonify({"status": "Success, lights updated"}), 200
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+    else:
+        return "pode",500
 
-            next_lights_config = rotate_lights(next_lights_config)
-            print("Rotating lights...")
-            set_lights(next_lights_config)
-            time.sleep(10)  
-
-    
-    for cap in lane_videos:
-        cap.release()
-    cv2.destroyAllWindows()
-
-
-if __name__ == "__main__":
-    control_traffic()
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000,debug=True)
